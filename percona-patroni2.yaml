@@ -4,4 +4,4 @@
   serial: 1  # Serial execution for etcd_version 2
   tasks:
   roles:
-    - role: /home/percona/roles/patroni
+    - role: patroni
