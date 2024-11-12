@@ -42,4 +42,4 @@
   become: true
 
 - name: Setup Percona release '{{ inventory_hostname }}'
-ansible.builtin.shell: sudo percona-release setup '{{ percona_release }}'
+  ansible.builtin.shell: sudo percona-release setup '{{ percona_release }}'
