@@ -72,9 +72,17 @@ ectd2 installation is slower compared with etcd3 due to it serial execution.
   ```bash
    ansible-playbook -i inventory.ini percona-patroni2.yaml --tags=deploy
    ```
+or
+  ```bash
+   ansible-playbook -i inventory.yaml percona-patroni2.yaml --tags=deploy
+   ```
 ## Deploy etcd3 ##
   ```bash
    ansible-playbook -i inventory.ini percona-patroni3.yaml --tags=deploy
+   ```
+or
+  ```bash
+   ansible-playbook -i inventory.yaml percona-patroni3.yaml --tags=deploy
    ```
 
 
