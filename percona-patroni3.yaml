@@ -3,4 +3,4 @@
   ignore_errors: true
   tasks:
   roles:
-    - role: /home/percona/roles/patroni
+    - role: patroni
