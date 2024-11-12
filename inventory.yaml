@@ -1,0 +1,57 @@
+all:
+  children:
+    patroni:
+      children:
+        db1:
+        db2:
+        db3:
+      vars:
+         patroni_version: 3
+         patroni_data_dir: /etc/patroni
+         postgres_bin_dir: /usr/lib/postgresql/14/bin/
+         percona_release: ppg14
+         ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+         install_postgresql: true
+         postgres_data_dir: /var/lib/postgresql/{{ postgres_version }}/main
+         postgres_version: 14
+         db_connections: 200
+         shared_memory: 2GB
+         wallevel: replica
+         wal_senders: 10
+         hotstandby: on
+         patroni_scope: test
+         patroni_port: 8008
+         etcd_port: 2379
+         replication_slots: 10
+         db_port: 5432
+         replicator_user: replicator
+         replication_password: replication
+         postgres_superuser: postgres
+         postgres_superuserpassword: postgres
+         no_failover: false
+         no_loadbalancer: false
+         watch_dog_mode: 'disable'
+         boot_strap_watch_dog: false
+         etcd_version: 3
+
+    etcd:
+      children:
+        db3:
+        db2:
+        db1:
+      vars:
+        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
+    db1:
+      hosts:
+        prasanth-db-01:
+          ansible_host: 10.0.137.36
+
+    db2:
+      hosts:
+        prasanth-db-02:
+          ansible_host: 10.0.154.97
+    db3:
+      hosts:
+        prasanth-db-03:
+          ansible_host: 10.0.151.12
