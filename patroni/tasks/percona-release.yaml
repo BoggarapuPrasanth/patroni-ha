@@ -38,8 +38,8 @@
       ansible.builtin.shell: sudo apt update
       when:  ansible_facts['distribution'] in ['Ubuntu', 'Debian']
 
-    - name: Setup Percona release '{{ inventory_hostname }}'
-      ansible.builtin.shell: sudo percona-release setup '{{ postgres_version }}'
-
   when: percona_release_check.msg != ''
   become: true
+
+- name: Setup Percona release '{{ inventory_hostname }}'
+ansible.builtin.shell: sudo percona-release setup '{{ percona_release }}'
