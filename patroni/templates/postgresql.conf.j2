@@ -1,0 +1,9 @@
+listen_addresses = '*'
+port = {{ db_port | default(5432) }}
+max_connections = {{ db_connections | default(100) }}
+shared_buffers = {{ shared_memory | default('4GB') }}
+wal_level = {{ wallevel | default('replica') }}
+max_wal_senders = {{ wal_senders | default(10) }}
+hot_standby = {{ hotstandby | default('on') }}
+synchronous_commit = off
+archive_mode = on

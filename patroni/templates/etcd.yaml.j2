@@ -1,0 +1,24 @@
+{% if etcd_version == 3 %}
+# Configuration for etcd version 3
+name: '{{ inventory_hostname }}'
+data-dir: /var/lib/etcd
+initial-advertise-peer-urls: "http://{{ ansible_default_ipv4.address }}:2380"
+listen-peer-urls: "http://{{ ansible_default_ipv4.address }}:2380"
+advertise-client-urls: "http://{{ ansible_default_ipv4.address }}:2379"
+listen-client-urls: "http://{{ ansible_default_ipv4.address }}:2379,http://localhost:2379"
+initial-cluster: "{{ initial_cluster }}"
+initial-cluster-state: new
+initial-cluster-token: prod
+
+{% elif etcd_version == 2 %}
+# Configuration for etcd version 2
+ETCD_NAME="{{ inventory_hostname }}"
+ETCD_INITIAL_CLUSTER="{{ initial_cluster }}"
+ETCD_INITIAL_CLUSTER_TOKEN="prod_cluster"
+ETCD_INITIAL_CLUSTER_STATE="{{ ETCD_INITIAL_CLUSTER_STATE_get }}"
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://{{ ansible_default_ipv4.address }}:2380"
+ETCD_DATA_DIR="/var/lib/etcd/postgresql"
+ETCD_LISTEN_PEER_URLS="http://{{ ansible_default_ipv4.address }}:2380"
+ETCD_LISTEN_CLIENT_URLS="http://{{ ansible_default_ipv4.address }}:2379,http://localhost:2379"
+ETCD_ADVERTISE_CLIENT_URLS="http://{{ ansible_default_ipv4.address }}:2379"
+{% endif %}

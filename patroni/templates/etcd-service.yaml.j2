@@ -1,0 +1,36 @@
+{% if etcd_version == 2 %}
+[Unit]
+Description=Etcd Server
+After=network.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+# set GOMAXPROCS to number of processors
+EnvironmentFile=/etc/default/etcd.env
+ExecStart=/bin/bash -c "GOMAXPROCS=$(nproc) /usr/bin/etcd"
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+{% elif etcd_version == 3 %}
+[Unit]
+Description=Etcd Server
+After=network.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+# set GOMAXPROCS to number of processors
+ExecStart=/bin/bash -c "GOMAXPROCS=$(nproc) /usr/bin/etcd --config-file=/etc/etcd/etcd.conf.yaml"
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+{% endif %}

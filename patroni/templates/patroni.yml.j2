@@ -1,0 +1,85 @@
+scope: {{ patroni_scope | default('patroni') }}
+name: "{{ ansible_hostname }}"
+
+restapi:
+  listen: "0.0.0.0:{{ patroni_port | default(8008) }}"
+  connect_address: {{ ansible_default_ipv4.address }}:{{ patroni_portt | default(8008) }}
+
+
+{% if patroni_version == 2 %}
+etcd:
+  hosts: "{%- for host in groups['etcd'] -%}{%- if hostvars[host].ansible_default_ipv4 is defined and hostvars[host].ansible_default_ipv4.address is defined -%}{{ hostvars[host].ansible_default_ipv4.address }}{% else %}{{ hostvars[host].ansible_host | default('localhost') }}{% endif %}:{{ etcd_port | default(2379) }}{% if not loop.last %},{% endif %}{%- endfor -%}"
+{% elif patroni_version == 3 %}
+etcd3:
+  hosts: "{%- for host in groups['etcd'] -%}{%- if hostvars[host].ansible_default_ipv4 is defined and hostvars[host].ansible_default_ipv4.address is defined -%}{{ hostvars[host].ansible_default_ipv4.address }}{% else %}{{ hostvars[host].ansible_host | default('localhost') }}{% endif %}:{{ etcd_port | default(2379) }}{% if not loop.last %},{% endif %}{%- endfor -%}"
+{% elif patroni_version == 2 and etcd_version == 3 %}
+etcd:
+  hosts: "{%- for host in groups['etcd'] -%}{%- if hostvars[host].ansible_default_ipv4 is defined and hostvars[host].ansible_default_ipv4.address is defined -%}{{ hostvars[host].ansible_default_ipv4.address }}{% else %}{{ hostvars[host].ansible_host | default('localhost') }}{% endif %}:{{ etcd_port | default(2379) }}{% if not loop.last %},{% endif %}{%- endfor -%}"
+  protocol_version: 3
+{% else %}
+etcd:
+  hosts: "{%- for host in groups['etcd'] -%}{%- if hostvars[host].ansible_default_ipv4 is defined and hostvars[host].ansible_default_ipv4.address is defined -%}{{ hostvars[host].ansible_default_ipv4.address }}{% else %}{{ hostvars[host].ansible_host | default('localhost') }}{% endif %}:{{ etcd_port | default(2379) }}{% if not loop.last %},{% endif %}{%- endfor -%}"
+{% endif %}
+
+bootstrap:
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    postgresql:
+      {% if install_postgresql %}
+
+      authentication:
+        replication:
+          username: replicator
+          password: replication
+      {% endif %}
+
+      use_pg_rewind: true
+      use_slots: true
+      parameters:
+        watchdog: {{ boot_strap_watch_dog }}
+        wal_level: {{ wallelvel | default('replica') }}
+        hot_standby: {{ hotstandby | default('on') }}
+        logging_collector: 'on'
+        max_wal_senders: {{ wal_senders | default(5) }}
+        max_replication_slots: {{ replication_slots | default(5) }}
+        wal_log_hints: "on"
+        archive_mode: "on"
+  initdb:
+    - encoding: UTF8
+    - data-checksums
+  pg_hba:
+    - host replication replicator 0.0.0.0/0 md5
+    - host all all 0.0.0.0/0 md5
+
+postgresql:
+  listen: 0.0.0.0:{{ db_port | default(5432) }}
+  connect_address: "{{ ansible_default_ipv4.address }}:{{ db_port | default(5432) }}"
+  data_dir: "{{ postgres_data_dir }}"
+  bin_dir: "{{ postgres_bin_dir }}"
+  authentication:
+    replication:
+      username: "{{ replicator_user | default('replicator') }}"
+      password: "{{ replication_password | default('replication') }}"
+    superuser:
+      username: "{{ postgres_superuser | default('postgres') }}"
+      password: "{{ postgres_superuserpassword | default('test') }}"
+  parameters:
+    unix_socket_directories: '/var/run/postgresql'
+    max_connections: {{ db_connections | default(100) }}
+    shared_buffers: {{ shared_memory | default('2GB') }}
+    work_mem: '128MB'
+    max_parallel_workers_per_gather: 4
+
+watchdog:
+  mode: {{ watch_dog_mode | default('required') }}
+  device: /dev/watchdog
+  safety_margin: 5
+
+tags:
+  nofailover: {{ no_failover | default('false') }}
+  noloadbalance: {{ no_loadbalancer | default('false') }}
+  clonefrom: false
+  nosync: false

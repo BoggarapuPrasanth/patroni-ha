@@ -1,0 +1,29 @@
+---
+postgres_data_dir: "/var/lib/postgresql/{{ postgres_version }}/main"
+patroni_data_dir: 
+postgres_user: "postgres"
+postgres_password: "postgres"
+patroni_version: 3
+postgres_bin_dir: '/usr/lib/postgrsql/14/bin'
+percona_release: 'ppg14'
+install_postgresql: false
+postgres_version: 14
+db_connections: 100
+shared_memory: '2GB'
+wallevel: 'replica'
+wal_senders: 10
+hotstandby: 'on'
+patroni_scope: 'test'
+patroni_port: 8008
+etcd_port: 2379
+replication_slots: 10
+db_port: 5432
+replicator_user: 'replicator'
+replication_password: 'replication'
+postgres_superuser: 'postgres'
+postgres_superuserpassword: 'postgres'
+no_failover: false
+no_loadbalancer: false
+etcd_version: 3
+watch_dog_mode: 'disable'
+boot_strap_watch_dog: false

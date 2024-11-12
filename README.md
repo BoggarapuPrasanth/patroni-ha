@@ -4,7 +4,7 @@
 percona-patroni-ha role to install postgres with High Availability
 
 ## Pre-reqs ##
-watch dog:  After 
+
 ```bash
 sudo sh -c 'echo "softdog" >> /etc/modules'
 sudo sh -c 'echo "KERNEL=="watchdog", OWNER="postgres", GROUP="postgres"" >> /etc/udev/rules.d/61-watchdog.rules'
@@ -76,3 +76,27 @@ ectd2 installation is slower compared with etcd3 due to it serial execution.
   ```bash
    ansible-playbook -i inventory.ini percona-patroni3.yaml --tags=deploy
    ```
+
+
+## Sample output ##
+```bash
+TASK [/home/percona/roles/patroni : Print Patroni final output] *****************************************************************************************************************************************************************************************
+skipping: [prasanth-db-01]
+skipping: [prasanth-db-02]
+ok: [prasanth-db-03] => {
+    "msg": [
+        "+ Cluster: test (7436504368086593508) ---+-----------+----+-----------+",
+        "| Member         | Host        | Role    | State     | TL | Lag in MB |",
+        "+----------------+-------------+---------+-----------+----+-----------+",
+        "| ip-*********** | *********** | Leader  | running   |  1 |           |",
+        "| ip-*********** | *********** | Replica | streaming |  1 |         0 |",
+        "| ip-*********** | *********** | Replica | streaming |  1 |         0 |",
+        "+----------------+-------------+---------+-----------+----+-----------+"
+    ]
+}
+
+PLAY RECAP **********************************************************************************************************************************************************************************************************************************************
+prasanth-db-01             : ok=28   changed=14   unreachable=0    failed=0    skipped=19   rescued=0    ignored=2
+prasanth-db-02             : ok=28   changed=15   unreachable=0    failed=0    skipped=19   rescued=0    ignored=1
+prasanth-db-03             : ok=31   changed=17   unreachable=0    failed=0    skipped=16   rescued=0    ignored=1
+```

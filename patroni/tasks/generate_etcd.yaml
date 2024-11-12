@@ -1,0 +1,70 @@
+- name: Check if etcd is already initialized (first node to start) on {{ inventory_hostname }}
+  stat:
+    path: /etc/default/etcd.env
+  register: etcd_config_2
+  when:  etcd_version  == 2
+
+- name: Check if etcd is already initialized (first node to start) on {{ inventory_hostname }}
+  stat:
+    path: /etc/etcd/etcd.conf.yaml
+  register: etcd_config
+  when:  etcd_version  != 2
+
+- name: Debug etcd_config_2 and etcdctl_exist_output
+  debug:
+    msg:
+      - "etcd_config_2: {{ etcd_config_2 }}"
+      - "etcdctl_exist_output: {{ etcdctl_exist_output.stdout_lines }}"
+
+- name: Set ETCD_INITIAL_CLUSTER_STATE based on inventory order on {{ inventory_hostname }}
+  set_fact:
+    ETCD_INITIAL_CLUSTER_STATE_get: "{{ 'new' if inventory_hostname == groups['etcd'][0] else 'existing' }}"
+  when: 
+    - etcd_version == 2
+    - etcd_config_2 is defined
+    - etcd_config_2.stat is defined
+    - etcd_config_2.stat.exists == false or ('started' not in etcdctl_exist_output.stdout_lines)
+
+- name: Set ETCD_INITIAL_CLUSTER_STATE for subsequent nodes
+  set_fact:
+    ETCD_INITIAL_CLUSTER_STATE_get: "existing"
+  when: 
+    - etcd_config_2 is defined
+    - etcd_config_2.stat is defined
+    - etcd_config_2.stat.exists == true
+    - etcd_version == 2
+
+- name: Set ETCD name and initial cluster
+  set_fact:
+    initial_cluster: >-
+      {% set initial_cluster = [] %}
+      {% for host in groups['etcd'] %}
+        {% if hostvars[host].ansible_host is defined %}
+          {% set _ = initial_cluster.append(host + '=http://' + hostvars[host].ansible_host + ':2380') %}
+        {% endif %}
+      {% endfor %}
+      {{ initial_cluster | join(',') }}
+  when: etcd_version != 2
+
+
+- name: Set ETCD name and initial cluster for version2
+  set_fact:
+    ETCD_NAME: "{{ inventory_hostname }}"
+    initial_cluster: >-
+      {% set initial_cluster = [] %}
+      {% for host in groups['etcd'][:groups['etcd'].index(inventory_hostname) + 1] %}
+        {% if hostvars[host].ansible_host is defined %}
+          {% set _ = initial_cluster.append(host + '=http://' + hostvars[host].ansible_host + ':2380') %}
+        {% endif %}
+      {% endfor %}
+      {{ initial_cluster | join(',') }}
+  when: etcd_version == 2
+
+- name: Remove leading and trailing spaces from initial_cluster
+  set_fact:
+    initial_cluster: "{{ initial_cluster | regex_replace('^\\s+|\\s+$', '') }}"
+
+- name: Print ETCD_NAME and ETCD_INITIAL_CLUSTER
+  debug:
+    msg:
+      - "ETCD_INITIAL_CLUSTER={{ initial_cluster }}"

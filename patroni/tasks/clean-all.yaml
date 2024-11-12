@@ -1,0 +1,48 @@
+- name: Stop Patroni and PostgreSQL services
+  ansible.builtin.systemd:
+    name: patroni
+    state: stopped
+  become: true
+
+- name: Stop etcd service
+  ansible.builtin.systemd:
+    name: etcd
+    state: stopped
+  become: true
+
+- name: Running autoremove on Debian-based systems
+  ansible.builtin.command: apt autoremove -y
+  when: ansible_os_family == "Debian"
+  become: true
+
+- name: Removing packages on Debian-based systems
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - percona-postgresql-{{ postgres_version }}
+    - etcd
+    - percona-patroni
+  when: ansible_os_family == "Debian"
+  become: true
+
+- name: Removing packages on RedHat-based systems (including CentOS, RHEL, Amazon, OracleLinux)
+  ansible.builtin.yum:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - percona-postgresql-{{ postgres_version }}
+    - etcd
+    - percona-patroni
+  when: ansible_os_family in ["RedHat", "Amazon", "OracleLinux", "CentOS"]
+  become: true
+
+- name: Deleting data directory of etcd
+  ansible.builtin.shell: |
+    rm -rf /var/lib/etcd/*
+  become: true
+
+- name: Deleting configuration file
+  ansible.builtin.shell: |
+    rm -rf /etc/default/etcd.env
+  become: true

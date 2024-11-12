@@ -1,0 +1,60 @@
+---
+- name: Patroni package installation on '{{ inventory_hostname }}'
+  become: true
+  block:
+    - name: Install Patroni package on Debian-based systems
+      ansible.builtin.apt:
+        name: "percona-patroni=1:{{ patroni_version }}*"
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install Patroni package on yum-based systems
+      ansible.builtin.yum:
+        name: "percona-patroni-{{ patroni_version }}"
+        state: present
+      when: ansible_os_family in ["RedHat", "Amazon", "OracleLinux", "CentOS"]
+
+- name: Ensure Patroni directory exists
+  ansible.builtin.file:
+    path: "{{ patroni_data_dir }}"
+    state: directory
+    owner: postgres
+    group: postgres
+  become: true
+
+- name: Configure Patroni
+  ansible.builtin.template:
+    src: patroni.yml.j2
+    dest: "{{ patroni_data_dir }}/patroni.yml"
+  become: true
+
+- name: Reload systemd
+  ansible.builtin.command: systemctl daemon-reload
+  become: true
+
+- name: Enable and start Patroni service
+  ansible.builtin.systemd:
+    name: patroni
+    enabled: yes
+    state: restarted
+  become: true
+  register: patroni_restart_result
+  until: patroni_restart_result.changed == true
+  retries: 5
+  delay: 10
+
+- name: Wait for Patroni to start
+  ansible.builtin.shell: sleep 10
+  when: inventory_hostname == groups['patroni'][-1]
+
+- name: Patroni output
+  ansible.builtin.shell: |
+    patronictl -c /etc/patroni/patroni.yml list
+  register: patroni_finaloutput
+  when: inventory_hostname == groups['patroni'][-1]
+  become: true
+
+- name: Print Patroni final output
+  ansible.builtin.debug:
+    msg: "{{ patroni_finaloutput.stdout_lines }}"
+  when: inventory_hostname == groups['patroni'][-1]

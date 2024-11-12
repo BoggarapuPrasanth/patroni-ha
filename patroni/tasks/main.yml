@@ -1,0 +1,34 @@
+---
+- name: setup percona-relase on {{ inventory_hostname }}
+  ansible.builtin.import_tasks: percona-release.yaml
+  tags:
+    - patroni
+    - postgresql
+    - etcd
+    - percona-release
+    - deploy
+
+
+- name: Install etcd client (for Patroni's backend) '{{ inventory_hostname }}'
+  ansible.builtin.import_tasks: etcd-installtion.yaml
+  tags:
+   - etcd   
+   - deploy
+
+- name: Postgres playing on '{{ inventory_hostname }}'
+  ansible.builtin.import_tasks: configure_postgres.yaml
+  tags:
+    - postgresql 
+    - deploy
+
+- name: Patroni Playing '{{ inventory_hostname }}' configuration
+  ansible.builtin.import_tasks: configure_patroni.yaml
+  when: "'patroni' in group_names"
+  tags:
+    - patroni
+    - deploy
+
+- name: Cleaning all
+  ansible.builtin.import_tasks: clean-all.yaml
+  tags: 
+   - clean 

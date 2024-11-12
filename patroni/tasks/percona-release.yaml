@@ -1,0 +1,45 @@
+- name: setup percona-relase on {{ inventory_hostname }}
+  ansible.builtin.shell: which percona-release
+  register: percona_release_check
+  ignore_errors: true
+
+- name: facts
+  debug:
+   var: ansible_facts
+  no_log: true
+
+- name: Download, Install, Update and Setup Percona package '{{ inventory_hostname }}'
+  block:
+    - name: Download Percona release package
+      ansible.builtin.copy:
+        src: >-
+          {% if ansible_facts['distribution'] in ['Ubuntu', 'Debian'] %}
+            percona-release_latest.generic_all.deb
+          {% else %}
+            percona-release-latest.noarch.rpm
+          {% endif %}
+        dest: /tmp/
+
+    - name: Install Percona release package '{{ inventory_hostname }}'
+      ansible.builtin.shell: |
+         {% if ansible_facts['distribution'] in ['Ubuntu', 'Debian'] %}
+                    sudo apt install -y /tmp/percona-release_latest.generic_all.deb
+         {% elif ansible_facts['distribution'] in ['CentOS', 'RedHat', 'AlmaLinux', 'Amazon'] %}
+                {% if ansible_facts['distribution_major_version'] | int >= 8 %}
+                     sudo dnf install -y /tmp/percona-release-latest.noarch.rpm
+                {% else %}
+                    sudo yum install -y /tmp/percona-release-latest.noarch.rpm
+                {% endif %}
+         {% else %}
+                  echo "Unsupported distribution: {{ ansible_facts['distribution'] }}"
+         {% endif %}
+
+    - name: Update apt package list (for Ubuntu only) '{{ inventory_hostname }}'
+      ansible.builtin.shell: sudo apt update
+      when:  ansible_facts['distribution'] in ['Ubuntu', 'Debian']
+
+    - name: Setup Percona release '{{ inventory_hostname }}'
+      ansible.builtin.shell: sudo percona-release setup '{{ postgres_version }}'
+
+  when: percona_release_check.msg != ''
+  become: true

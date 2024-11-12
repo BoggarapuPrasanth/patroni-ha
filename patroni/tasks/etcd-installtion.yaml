@@ -1,0 +1,142 @@
+---
+- name: Check existing etcd installations
+  ansible.builtin.shell: etcdctl member list
+  register: etcdctl_exist_output
+
+- name: Setup and configure etcd for Patroni
+  block:
+    - name: Install required packages for etcd
+      block:
+        - name: Install etcd and python3-etcd on Debian-based systems
+          ansible.builtin.apt:
+            name:
+              - etcd
+              - python3-etcd
+            state: present
+          when: ansible_facts['distribution'] in ['Ubuntu', 'Debian']
+          become: true
+
+        - name: Install etcd and python3-etcd on CentOS/RedHat 7
+          ansible.builtin.yum:
+            name:
+              - "etcd=1:{{ etcd_version }}*"
+              - python3-etcd
+            state: present
+          when: ansible_facts['distribution'] in ['CentOS', 'RedHat', 'AlmaLinux', 'Amazon'] and ansible_facts['distribution_major_version'] == '7'
+          become: true
+
+        - name: Install etcd and python3-etcd on CentOS/RedHat 8
+          ansible.builtin.dnf:
+            name:
+              - "etcd=1:{{ etcd_version }}*"
+              - python3-etcd
+            state: present
+          when: ansible_facts['distribution'] in ['CentOS', 'RedHat', 'AlmaLinux', 'Amazon'] and ansible_facts['distribution_major_version'] >= '8'
+          become: true
+
+    - name: Ensure etcd configuration directory exists
+      ansible.builtin.file:
+        path: /etc/etcd
+        state: directory
+        mode: '0755'
+      become: true
+
+    - name: Generate etcd configuration file
+      ansible.builtin.import_tasks: generate_etcd.yaml
+
+    - name: Copying etcd on the destination
+      ansible.builtin.template:
+        src: etcd.yaml.j2
+        dest: "{{ '/etc/default/etcd.env' if etcd_version == 2 else '/etc/etcd/etcd.conf.yaml' }}"
+        force: yes
+      become: true
+
+
+    - name: Copy the service file to systemd
+      ansible.builtin.template:
+        src: etcd-service.yaml.j2
+        dest: /lib/systemd/system/etcd.service
+        force: true
+      become: true
+
+    - name: Reload systemd manager configuration
+      ansible.builtin.command: systemctl daemon-reload
+      become: true
+
+    - name: Restart etcd service for version 2 on first node
+      ansible.builtin.systemd:
+        name: etcd
+        state: restarted
+        enabled: true
+      become: true
+      when: inventory_hostname == groups['etcd'][0] and etcd_version == 2
+
+    - name: Wait for etcd to be ready on first node (version 2)
+      ansible.builtin.wait_for:
+        host: "{{ ansible_default_ipv4.address | default(ansible_host) }}"
+        port: 2379
+        state: started
+        delay: 20
+        timeout: 60
+      when: inventory_hostname == groups['etcd'][0] and etcd_version == 2
+
+    - name: Add member to etcd if not already present (version 2)
+      ansible.builtin.shell: |
+        if etcdctl member list | grep -q '{{ inventory_hostname }}'; then
+          echo "Member {{ inventory_hostname }} already exists";
+          exit 0;
+        else
+          sudo etcdctl member add {{ inventory_hostname }} --peer-urls=http://{{ ansible_default_ipv4.address | default(ansible_host) }}:2380
+        fi
+      become: true
+      register: etcd_add_result
+      until: etcd_add_result.rc == 0
+      retries: 10
+      delay: 20
+      delegate_to: "{{ groups['etcd'][0] }}"
+      when: etcd_version == 2
+
+    - name: Restart etcd service for other nodes (version 2)
+      ansible.builtin.systemd:
+        name: etcd
+        state: restarted
+        enabled: true
+      become: true
+      register: etcd_restart_result
+      until: etcd_restart_result.changed == true
+      retries: 10
+      delay: 20
+      when: inventory_hostname != groups['etcd'][0] and etcd_version == 2
+
+    - name: Restart etcd service for version 
+      ansible.builtin.systemd:
+        name: etcd
+        state: restarted
+        enabled: true
+      become: true
+      register: etcd_restart_result
+      until: etcd_restart_result.changed == true
+      retries: 10
+      delay: 20
+      when: etcd_version != 2
+
+    - name: Print result of etcd member add
+      debug:
+        msg: "{{ etcd_add_result.stdout }}"
+      when: inventory_hostname == groups['etcd'][0] and etcd_version == 2
+
+    - name: Check member output after adding
+      ansible.builtin.shell: sudo etcdctl member list
+      register: member_list
+      become: true
+
+    - name: Print members list output
+      debug:
+        msg: "{{ member_list.stdout_lines }}"
+
+  when: "'etcd' in group_names and ('started' not in etcdctl_exist_output.stdout_lines | join(' ') and (etcdctl_exist_output.stdout_lines | length) < 3)"
+
+  rescue:
+    - name: Handle failure during etcd configuration
+      debug:
+        msg: "An error occurred during the etcd configuration process"
