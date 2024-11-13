@@ -35,7 +35,7 @@ etcd3 play: percona-patroni3.yaml
 [patroni:vars]
 patroni_version=3
 patroni_data_dir=/etc/patroni
-postgres_bin_dir=/usr/lib/postgresql/14/bin/  ## this is needed for patroni configuration
+postgres_bin_dir=/usr/lib/postgresql/{{ postgres_version }}/bin/  ## this is needed for patroni configuration
 percona_release=ppg14
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 install_postgresql=true      ## if you want postgresql to initialize by patroni. If postgresql already install make it false
@@ -108,3 +108,34 @@ prasanth-db-01             : ok=28   changed=14   unreachable=0    failed=0    s
 prasanth-db-02             : ok=28   changed=15   unreachable=0    failed=0    skipped=19   rescued=0    ignored=1
 prasanth-db-03             : ok=31   changed=17   unreachable=0    failed=0    skipped=16   rescued=0    ignored=1
 ```
+
+
+## Cleaning up ##
+tag: clean remove the all installation from db nodes. Patroni, etcd, Postgres will be removed.
+     Use it for only test nodes.
+
+  ```bash
+   ansible-playbook -i inventory.yaml percona-patroni3.yaml --tags=clean
+   ```
+
+## Exclude PostgreSQL installation if it is already installed. ##
+
+Most of the time we just have to Configure patroni as Postgresql already installed in client environment. 
+In that case we need to set install_postgresql=false in host variables.
+
+## Etcd Version ##
+
+ectd latest stable version is 3. Use version2 only in specific cases. For new installation use version 3.
+
+## postgres_bin_dir and postgres_data_dir variable ##
+
+postgres_bin_dir variable is important parameter.
+
+These two parameters used in patroni.
+
+bin directory always depends on the OS.
+For example: 
+Redhat Family such as Redhat, Centos, AmazonLinux default bin directory: - ** /usr/pgsql-<version>/bin**
+Debian Family: - **/usr/lib/postgresql/14/bin/""
+
+
