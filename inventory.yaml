@@ -9,8 +9,8 @@ all:
          patroni_version: 3
          patroni_data_dir: /etc/patroni
          percona_release: ppg{{ postgres_version }}
-         ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
          install_postgresql: true
+         ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
          postgres_data_dir: /var/lib/postgresql/{{ postgres_version }}/main
          postgres_version: 13
          db_connections: 200
@@ -31,7 +31,6 @@ all:
          no_loadbalancer: false
          watch_dog_mode: 'disable'
          boot_strap_watch_dog: false
-
     etcd:
       children:
         db1:

@@ -20,7 +20,7 @@
     name: "{{ item }}"
     state: absent
   loop:
-    - percona-postgresql-{{ postgres_version }}
+    - percona-postgresql-{{ postgres_version }}*
     - etcd
     - percona-patroni
   when: ansible_os_family == "Debian"
@@ -31,7 +31,7 @@
     name: "{{ item }}"
     state: absent
   loop:
-    - percona-postgresql-{{ postgres_version }}
+    - percona-postgresql-{{ postgres_version }}*
     - etcd
     - percona-patroni
   when: ansible_os_family in ["RedHat", "Amazon", "OracleLinux", "CentOS"]
@@ -46,3 +46,4 @@
   ansible.builtin.shell: |
     rm -rf /etc/default/etcd.env
   become: true
+
