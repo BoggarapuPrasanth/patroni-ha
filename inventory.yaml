@@ -43,13 +43,13 @@ all:
     db1:
       hosts:
         prasanth-db-01:
-          ansible_host: 10.0.137.36
+          ansible_host: 10.*.*.*
 
     db2:
       hosts:
         prasanth-db-02:
-          ansible_host: 10.0.154.97
+          ansible_host: 10.*.*.*
     db3:
       hosts:
         prasanth-db-03:
-          ansible_host: 10.0.151.12
+          ansible_host: 10.*.*.*
