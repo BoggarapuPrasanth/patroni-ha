@@ -75,8 +75,9 @@ etcd_version=3 ### this defines the version of patroni
 ```
 ## Entries in Inventory file ##
 
-**keep the same order for both groups. **
-** for etcd3 it really doesn't matter much but etcd2 executes in serial, so it does matter. **
+**keep the same order for both groups.**
+**for etcd3 it really doesn't matter much but etcd2 executes in serial, so it does matter.**
+
 ```bash
 ex:
 Correct order:
