@@ -3,6 +3,15 @@
 ## Descripton ##
 percona-patroni-ha role to install postgres with High Availability
 
+For test server it you can skip this by disabling watchdog.
+
+Below parameters will help to disable watch dog. So, you can up patroni without a restart
+
+```bash
+watch_dog_mode='disable'   ## in order to enable watchdog, you need to follow prereq steps to enable watch dod at OS level.
+boot_strap_watch_dog=false  ##this will disable watch dog while bootstraping postgres
+```
+
 ## Pre-reqs ##
 
 ```bash
