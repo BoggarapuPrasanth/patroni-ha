@@ -67,7 +67,8 @@ etcd_version=3 ### this defines the version of patroni
 ## Entries in Inventory file ##
 
 - **keep the same order for both groups. **
-  ex:
+```bash
+ex:
 Correct order:
   if patroni:
        db01
@@ -88,6 +89,7 @@ then  etcd:
         db03
         db02
         db01
+```
 ## Deploy with etcd2 ##
 
 ectd2 installation is slower compared with etcd3 due to it serial execution.
