@@ -3,6 +3,15 @@
 ## Descripton ##
 percona-patroni-ha role to install postgres with High Availability
 
+For test server it you can skip this by disabling watchdog.
+
+Below parameters will help to disable watch dog. So, you can up patroni without a restart
+
+```bash
+watch_dog_mode='disable'   ## in order to enable watchdog, you need to follow prereq steps to enable watch dod at OS level.
+boot_strap_watch_dog=false  ##this will disable watch dog while bootstraping postgres
+```
+
 ## Pre-reqs ##
 
 ```bash
@@ -66,7 +75,10 @@ etcd_version=3 ### this defines the version of patroni
 ```
 ## Entries in Inventory file ##
 
-- **keep the same order for both groups. **
+**keep the same order for both groups.**
+
+**for etcd3 it really doesn't matter much but etcd2 executes in serial, so it does matter.**
+
 ```bash
 ex:
 Correct order:
@@ -110,6 +122,7 @@ ectd2 installation is slower compared with etcd3 due to it serial execution.
   ```bash
    ansible-playbook -i inventory.ini percona-patroni2.yaml --tags=deploy
    ```
+**in some cases you might see error like, no hosts matched. Try running with inventory.yaml**
 or
   ```bash
    ansible-playbook -i inventory.yaml percona-patroni2.yaml --tags=deploy
@@ -124,7 +137,7 @@ or
    ```
 
 
-## Sample output ##
+## Sample output: you see below output once play completed ##
 ```bash
 TASK [/home/percona/roles/patroni : Print Patroni final output] *****************************************************************************************************************************************************************************************
 skipping: [prasanth-db-01]
