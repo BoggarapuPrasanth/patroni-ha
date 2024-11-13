@@ -1,46 +1,50 @@
----
-- name: Install PostgreSQL and required packages '{{ inventory_hostname }}'
-  become: true
-  ansible.builtin.package:
-    name: "{{ item }}"
-    state: present
-  loop:
-    - percona-postgresql-{{ postgres_version }}
-    - gnupg2
-    - lsb-release
-    - curl
+- name: Debug install_postgresql
+  debug:
+    msg: "install_postgresql = {{ install_postgresql }}"
 
-- name: Create PostgreSQL Data Directory
-  file:
-    path: "{{ postgres_data_dir }}/{{ postgres_version }}/main/"
-    state: directory
-    owner: postgres
-    group: postgres
-  become: true
+- name: Postgres installation
+  block:
+    - name: Install PostgreSQL and required packages '{{ inventory_hostname }}'
+      become: true
+      ansible.builtin.package:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - percona-postgresql-{{ postgres_version }}
+        - gnupg2
+        - lsb-release
+        - curl
 
-- name: Copying postgresql.conf file
-  template:
-    src: postgresql.conf.j2
-    dest: "{{ postgres_data_dir }}/{{ postgres_version }}/main/postgresql.conf"
-  become: true
+    - name: Create PostgreSQL Data Directory
+      become: true
+      ansible.builtin.file:
+        path: "{{ postgres_data_dir }}/{{ postgres_version }}/main/"
+        state: directory
+        owner: postgres
+        group: postgres
 
-- name: Configure pg_hba.conf
-  copy:
-    dest: "{{ postgres_data_dir }}/{{ postgres_version }}/main/pg_hba.conf"
-    content: |
+    - name: Copying postgresql.conf file
+      become: true
+      ansible.builtin.template:
+        src: postgresql.conf.j2
+        dest: "{{ postgres_data_dir }}/{{ postgres_version }}/main/postgresql.conf"
+
+    - name: Configure pg_hba.conf
+      become: true
+      ansible.builtin.copy:
+        dest: "{{ postgres_data_dir }}/{{ postgres_version }}/main/pg_hba.conf"
+        content: |
           host    all             all             0.0.0.0/0            md5
-  become: true
 
+    - name: Disable postgres service
+      become: true
+      ansible.builtin.systemd:
+        name: postgresql
+        enabled: no
+        state: stopped
 
-- name: Disable postgres service
-  ansible.builtin.systemd:
-    name: postgresql
-    enabled: no
-    state: stopped
-  become: true
-
-- name: Remove postgres data directory
-  ansible.builtin.shell: |
-        sudo rm -fr /var/lib/postgresql/{{ postgres_version }}/main
-  become: true
-
+    - name: Remove postgres data directory
+      become: true
+      ansible.builtin.shell: |
+        rm -fr /var/lib/postgresql/{{ postgres_version }}/main
+  when: install_postgresql == true
