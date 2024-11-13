@@ -1,5 +1,5 @@
 scope: {{ patroni_scope | default('patroni') }}
-name: "{{ ansible_hostname }}"
+name: "{{ inventory_hostname }}"
 
 restapi:
   listen: "0.0.0.0:{{ patroni_port | default(8008) }}"
@@ -58,7 +58,15 @@ postgresql:
   listen: 0.0.0.0:{{ db_port | default(5432) }}
   connect_address: "{{ ansible_default_ipv4.address }}:{{ db_port | default(5432) }}"
   data_dir: "{{ postgres_data_dir }}"
-  bin_dir: "{{ postgres_bin_dir }}"
+
+{% if ansible_os_family == 'Debian' %}
+  bin_dir: "/usr/lib/postgresql/{{ postgres_version }}/bin/"
+{% elif ansible_os_family in ['RedHat', 'CentOS', 'Amazon', 'OracleLinux'] %}
+  bin_dir: "/usr/pgsql-{{ postgres_version }}/bin/"
+{% else %}
+  bin_dir: "//usr/pgsql-{{ postgres_version }}/bin/"
+{% endif %}
+
   authentication:
     replication:
       username: "{{ replicator_user | default('replicator') }}"
