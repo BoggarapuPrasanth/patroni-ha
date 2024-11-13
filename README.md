@@ -137,6 +137,7 @@ prasanth-db-03             : ok=31   changed=17   unreachable=0    failed=0    s
 
 ## Cleaning up ##
 tag: clean remove the all installation from db nodes. Patroni, etcd, Postgres will be removed.
+     clean is disabled by default. To enable it patroni/tasks/main.yaml and uncomment task for clean
      Use it for only test nodes.
 
   ```bash
@@ -152,15 +153,7 @@ In that case we need to set install_postgresql=false in host variables.
 
 ectd latest stable version is 3. Use version2 only in specific cases. For new installation use version 3.
 
-## postgres_bin_dir and postgres_data_dir variable ##
-
-postgres_bin_dir variable is important parameter.
-
-These two parameters used in patroni.
-
-bin directory always depends on the OS.
-For example: 
-Redhat Family such as Redhat, Centos, AmazonLinux default bin directory: - ** /usr/pgsql-<version>/bin**
-Debian Family: - **/usr/lib/postgresql/14/bin/""
+##  and postgres_data_dir variable ##
+Please configure data directory if it different from /var/lib/postgresql
 
 
