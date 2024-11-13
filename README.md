@@ -64,7 +64,30 @@ boot_strap_watch_dog=false  ##this will disable watch dog while bootstraping pos
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 etcd_version=3 ### this defines the version of patroni
 ```
+## Entries in Inventory file ##
 
+- **keep the same order for both groups. **
+  ex:
+Correct order:
+  if patroni:
+       db01
+       db02
+       db03
+  then
+      etcd:
+        db01
+        db02
+        db03
+
+Wrong order:
+  if patroni:
+       db01
+       db02
+       db03
+then  etcd:
+        db03
+        db02
+        db01
 ## Deploy with etcd2 ##
 
 ectd2 installation is slower compared with etcd3 due to it serial execution.
