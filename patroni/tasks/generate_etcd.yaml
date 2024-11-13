@@ -4,7 +4,7 @@
   register: etcd_config_2
   when:  etcd_version  == 2
 
-- name: Check if etcd is already initialized (first node to start) on {{ inventory_hostname }}
+- name: Check if etcd is already initialized (first node to start) on {{ inventory_hostname }} verion 3+
   stat:
     path: /etc/etcd/etcd.conf.yaml
   register: etcd_config
