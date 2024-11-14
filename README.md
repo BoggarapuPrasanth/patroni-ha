@@ -13,7 +13,25 @@ boot_strap_watch_dog=false  ##this will disable watch dog while bootstraping pos
 ```
 
 ## Pre-reqs ##
+1. Need three nodes at least for Patroni installation. The node where you ran Ansible from, should be able to access other two nodes without password.
 
+Ex:
+
+db01
+db02
+db03
+
+you running ansible on db01
+
+on db01:
+ssh-keygen -t rsa
+
+Once key generated copy .pub key in other two nodes.
+
+2. Install ansible on db01
+   
+
+3. Configure watchdog
 ```bash
 sudo sh -c 'echo "softdog" >> /etc/modules'
 sudo sh -c 'echo "KERNEL=="watchdog", OWNER="postgres", GROUP="postgres"" >> /etc/udev/rules.d/61-watchdog.rules'
